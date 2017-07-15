@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -119,7 +120,9 @@ func networkFrameGenerator() func(*bytes.Buffer, byte, byte) *bytes.Buffer {
 
 	hlen := 7 // size of ARNETWORKAL_Frame_t header
 
+	var mutex sync.Mutex
 	return func(cmd *bytes.Buffer, frameType byte, id byte) *bytes.Buffer {
+		mutex.Lock()
 		if _, ok := seq[id]; !ok {
 			seq[id] = 0
 		}
@@ -129,6 +132,7 @@ func networkFrameGenerator() func(*bytes.Buffer, byte, byte) *bytes.Buffer {
 		if seq[id] > 255 {
 			seq[id] = 0
 		}
+		mutex.Unlock()
 
 		ret := &bytes.Buffer{}
 		ret.WriteByte(frameType)
